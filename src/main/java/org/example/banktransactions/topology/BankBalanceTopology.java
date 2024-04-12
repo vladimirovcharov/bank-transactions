@@ -1,12 +1,14 @@
 package org.example.banktransactions.topology;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.example.banktransactions.model.BankBalance;
 import org.example.banktransactions.model.BankTransaction;
 import org.example.banktransactions.model.JsonSerde;
@@ -15,6 +17,7 @@ public class BankBalanceTopology {
     public static final String BANK_TRANSACTIONS = "bank-transactions";
     public static final String BANK_BALANCES = "bank-balances";
     public static final String REJECTED_TRANSACTIONS = "rejected-transactions";
+    public static final String BANK_BALANCES_STORE = "bank-balances-store";
 
     public static Topology buildTopology() {
         StreamsBuilder streamsBuilder = new StreamsBuilder();
@@ -25,8 +28,10 @@ public class BankBalanceTopology {
                         Consumed.with(Serdes.Long(), bankTransactionJsonSerde))
                 .groupByKey()
                 .aggregate(BankBalance::new,
-                        ((key, value, aggregate) -> aggregate.process(value)),
-                        Materialized.with(Serdes.Long(), bankBalanceJsonSerde))
+                        (key, value, aggregate) -> aggregate.process(value),
+                        Materialized.<Long, BankBalance, KeyValueStore<Bytes, byte[]>>as(BANK_BALANCES_STORE)
+                                .withKeySerde(Serdes.Long())
+                                .withValueSerde(bankBalanceJsonSerde))
                 .toStream();
 
         bankBalanceKStream.to(BANK_BALANCES, Produced.with(Serdes.Long(), bankBalanceJsonSerde));
