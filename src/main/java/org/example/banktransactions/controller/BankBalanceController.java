@@ -20,7 +20,7 @@ public class BankBalanceController {
 
     @GetMapping(value = "/{bankBalanceId}", produces = "application/json")
     public ResponseEntity<BankBalance> getBankBalance(@PathVariable("bankBalanceId") Long bankBalanceId) {
-        var bankBalance = bankBalanceService.getBankBalanceById(bankBalanceId);
+        var bankBalance = bankBalanceService.getBankBalance(bankBalanceId);
         return ResponseEntity.ok(bankBalance);
     }
 }

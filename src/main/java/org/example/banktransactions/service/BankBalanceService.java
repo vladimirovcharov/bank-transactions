@@ -1,32 +1,19 @@
 package org.example.banktransactions.service;
 
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.example.banktransactions.model.BankBalance;
-import org.example.banktransactions.topology.BankBalanceTopology;
+import org.example.banktransactions.repository.BankBalanceRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class BankBalanceService {
 
-    private final KafkaStreams kafkaStreams;
+    private final BankBalanceRepository bankBalanceRepository;
 
-    public BankBalanceService(KafkaStreams kafkaStreams) {
-        this.kafkaStreams = kafkaStreams;
+    public BankBalanceService(BankBalanceRepository bankBalanceRepository) {
+        this.bankBalanceRepository = bankBalanceRepository;
     }
 
-    public BankBalance getBankBalanceById(Long bankBalanceId) {
-        return getStore().get(bankBalanceId);
-    }
-
-    private ReadOnlyKeyValueStore<Long, BankBalance> getStore() {
-        return kafkaStreams.store(
-                StoreQueryParameters.fromNameAndType(
-                        BankBalanceTopology.BANK_BALANCES_STORE,
-                        QueryableStoreTypes.keyValueStore()
-                )
-        );
+    public BankBalance getBankBalance(Long bankBalanceId) {
+        return bankBalanceRepository.find(bankBalanceId);
     }
 }

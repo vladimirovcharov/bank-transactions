@@ -23,10 +23,13 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:32181'
       KAFKA_LISTENERS: EXTERNAL_SAME_HOST://:29092,INTERNAL://:9092
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL_SAME_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL_SAME_HOST://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL_SAME_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
   kafka-create-topics:
     image: confluentinc/cp-server
@@ -38,3 +41,27 @@ services:
     working_dir: /scripts
     volumes:
       - ./scripts:/scripts
+
+  spring-app-1:
+    container_name: spring-app-1
+    hostname: spring-app-1
+    image: bank/bank-transactions:latest
+    depends_on:
+      - kafka-create-topics
+    ports:
+      - "7070:8080"
+    volumes:
+      - /tmp/kafka-streams/1:/tmp/kafka-streams
+    command: java -jar /app.jar --host.info=spring-app-1:8080
+
+  spring-app-2:
+    container_name: spring-app-2
+    hostname: spring-app-2
+    image: bank/bank-transactions:latest
+    depends_on:
+      - kafka-create-topics
+    ports:
+      - "8080:8080"
+    volumes:
+      - /tmp/kafka-streams/2:/tmp/kafka-streams
+    command: java -jar /app.jar --host.info=spring-app-2:8080
